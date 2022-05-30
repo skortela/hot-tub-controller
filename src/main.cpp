@@ -267,7 +267,7 @@ void setMainPower(bool value) {
 
 void sendInfo() {
 
-    StaticJsonDocument<300> doc;
+    StaticJsonDocument<800> doc;
     JsonObject root = doc.to<JsonObject>();
 
     root["ip"] = WiFi.localIP().toString();
@@ -280,9 +280,9 @@ void sendInfo() {
     //IPAddress ip = WiFi.localIP();
     //sprintf(buffer, "ip: %d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3]);
 
-    char* jsonBuffer = new char[300];
+    char* jsonBuffer = new char[800];
 
-    serializeJson(root, jsonBuffer, 300);
+    serializeJson(root, jsonBuffer, 800);
     Serial.println("sending info");
     Serial.println(jsonBuffer);
 
@@ -295,7 +295,7 @@ void sendInfo() {
 }*/
 
 void getStatus(char* pBuffer) {
-    StaticJsonDocument<400> doc;
+    StaticJsonDocument<800> doc;
     JsonObject root = doc.to<JsonObject>();
 
     //const char* KStrOn = "ON";
@@ -398,7 +398,7 @@ void getStatus(char* pBuffer) {
     //root["water_level"] = 80;
     //root["fuel_level"] = 50;
 
-    serializeJson(root, pBuffer, 400);
+    serializeJson(root, pBuffer, 800);
     //Serial.println("sending info");
     //Serial.println(pBuffer);
 
@@ -410,7 +410,7 @@ void sendStatus() {
     if (!m_board.isReady())
         return;
 
-    char* jsonBuffer = new char[400];
+    char* jsonBuffer = new char[800];
 
     getStatus(jsonBuffer);
 
@@ -443,7 +443,7 @@ void sendSensors() {
     const uint8_t count = pSensor->getDeviceCount();
 
     
-    StaticJsonDocument<200+JSON_OBJECT_SIZE(2) + JSON_ARRAY_SIZE(KMAX_DALLAS_SENSOR_COUNT) + KMAX_DALLAS_SENSOR_COUNT*JSON_OBJECT_SIZE(3)> doc;
+    StaticJsonDocument<300+JSON_OBJECT_SIZE(2) + JSON_ARRAY_SIZE(KMAX_DALLAS_SENSOR_COUNT) + KMAX_DALLAS_SENSOR_COUNT*JSON_OBJECT_SIZE(3)> doc;
     JsonObject root = doc.to<JsonObject>();
 
     JsonArray sensorsArr = root.createNestedArray("sensors");
@@ -472,7 +472,7 @@ void sendSensors() {
         }
     }
 
-    const int KBufferSize = 21+10 + count * 80;
+    const int KBufferSize = 200 + 21+10 + count * 80;
     char* pBuffer = new char[KBufferSize];
     serializeJson(root, pBuffer, KBufferSize);
 
@@ -779,7 +779,7 @@ void setup() {
     wifiSetup();
     initOTA();
 
-    m_mqttClient.setBufferSize(500);
+    m_mqttClient.setBufferSize(800);
     m_mqttClient.setServer(m_settings.m_mqtt_server, m_settings.m_mqtt_port);
     m_mqttClient.setCallback(mqtt_message_received);
     delay(1000);
@@ -800,7 +800,7 @@ void setup() {
         request->send(200, "text/html", KINDEX_HTML);
     });
     server.on("/json", HTTP_GET, [](AsyncWebServerRequest *request){
-        char* jsonBuffer = new char[300];
+        char* jsonBuffer = new char[800];
         getStatus(jsonBuffer);
         request->send(200, "application/json", jsonBuffer);
         delete jsonBuffer;
@@ -849,7 +849,7 @@ void setup() {
         }
         Serial.println("got set request");
 
-        char* jsonBuffer = new char[300];
+        char* jsonBuffer = new char[800];
         getStatus(jsonBuffer);
         request->send(200, "application/json", jsonBuffer);
         delete jsonBuffer;
