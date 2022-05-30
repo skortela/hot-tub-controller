@@ -9,6 +9,7 @@
 #define KMCP_PIN_RELAY_LED         KMCP_PIN_A0+3   // CH3 relay, GPA3
 
 #define ONE_WIRE_PIN D4
+#define KTEMPERATURE_RESOLUTION 12 // used temperature resolution (bits)
 
 
 //#define KPIN_BUTTON_UP D3
@@ -71,11 +72,7 @@ void Board::begin()
     m_oneWire.begin(ONE_WIRE_PIN);
     m_sensors.begin();
     m_sensors.setWaitForConversion(false);
-    m_sensors.setResolution(12);
-
-    for (int i=0; i < KMAX_DALLAS_SENSOR_COUNT; i++) {
-        m_temperatureCache[i] = DEVICE_DISCONNECTED_C;
-    }
+    m_sensors.setResolution(KTEMPERATURE_RESOLUTION);
 
     Serial.print("getDeviceCount: ");
     Serial.println(m_sensors.getDeviceCount());
@@ -146,23 +143,23 @@ void Board::loop()
         m_hasTemperaturesRead = false;
         m_sensors.requestTemperatures();
     }
-    if (!m_hasTemperaturesRead && (unsigned long)(millis() - m_lastTemperatureRequestTime) > 1750) {
+    if (!m_hasTemperaturesRead && (unsigned long)(millis() - m_lastTemperatureRequestTime) > m_sensors.millisToWaitForConversion(KTEMPERATURE_RESOLUTION)) {
         /*uint8_t devCount = m_sensors.getDeviceCount();
         for (uint8_t i=0; i < devCount && i < KMAX_DALLAS_SENSOR_COUNT; i++) {
             m_temperatureCache[i] = m_sensors.getTempCByIndex(i);
             Serial.println(m_temperatureCache[i] );
         }*/
-        m_temperatureCache[KCacheIndex_WaterPipeUpperTemperature] =
-            m_sensors.getTempC(KWaterPipeUpperTemperatureSensorAddr);
+        m_temperatureCache[KCacheIndex_WaterPipeUpperTemperature].addValue(
+            m_sensors.getTempC(KWaterPipeUpperTemperatureSensorAddr));
         
-        m_temperatureCache[KCacheIndex_WaterPipeLowerTemperature] =
-            m_sensors.getTempC(KWaterPipeLowerTemperatureSensorAddr);
+        m_temperatureCache[KCacheIndex_WaterPipeLowerTemperature].addValue(
+            m_sensors.getTempC(KWaterPipeLowerTemperatureSensorAddr));
         
-        m_temperatureCache[KCacheIndex_OutsideTemperature] =
-            m_sensors.getTempC(KOutsideTemperatureSensorAddr);
+        m_temperatureCache[KCacheIndex_OutsideTemperature].addValue(
+            m_sensors.getTempC(KOutsideTemperatureSensorAddr));
 
-        m_temperatureCache[KCacheIndex_WaterTankTemperature] =
-            m_sensors.getTempC(KWaterTankTemperatureSensorAddr);
+        m_temperatureCache[KCacheIndex_WaterTankTemperature].addValue(
+            m_sensors.getTempC(KWaterTankTemperatureSensorAddr));
 
         m_hasTemperaturesRead = true;
         m_cacheReady = true;
@@ -244,19 +241,19 @@ void Board::setExtPower(bool power)
 }
 float Board::getTemperatureWaterTank() const
 {
-    return m_temperatureCache[KCacheIndex_WaterTankTemperature];
+    return m_temperatureCache[KCacheIndex_WaterTankTemperature].value();
 }
 float Board::getTemperatureSensorWaterIn() const
 {
-    return m_temperatureCache[KCacheIndex_WaterPipeLowerTemperature];
+    return m_temperatureCache[KCacheIndex_WaterPipeLowerTemperature].value();
 }
 float Board::getTemperatureSensorWaterOut() const
 {
-    return m_temperatureCache[KCacheIndex_WaterPipeUpperTemperature];
+    return m_temperatureCache[KCacheIndex_WaterPipeUpperTemperature].value();
 }
 float Board::getTemperatureOutside() const
 {
-    return m_temperatureCache[KCacheIndex_OutsideTemperature];
+    return m_temperatureCache[KCacheIndex_OutsideTemperature].value();
 }
 
 

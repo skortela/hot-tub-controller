@@ -4,6 +4,7 @@
 #include <Adafruit_MCP23017.h>
 #include <OneWire.h>
 #include <DallasTemperature.h>
+#include "averageTemperature.h"
 
 #define KMCP_PIN_A0 	0 // GPA0...GPA7 -> Pin id: 0...7,  used as outputs
 #define KMCP_PIN_B0 	8 // GPB0...GPB7 -> Pin id: 8...15, used as inputs
@@ -75,7 +76,7 @@ private:
     unsigned long m_lastDebounceTime[10];
     unsigned long m_lastTemperatureRequestTime;
     bool m_hasTemperaturesRead;
-    float m_temperatureCache[KMAX_DALLAS_SENSOR_COUNT];
+    AverageTemperature m_temperatureCache[KMAX_DALLAS_SENSOR_COUNT];
     bool m_cacheReady;
 };
 
