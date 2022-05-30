@@ -80,6 +80,9 @@ static const char KINDEX_HTML[] PROGMEM = "<!DOCTYPE html><html lang=\"en\"><hea
  * 
  */
 
+#define ST(A) #A
+#define STR(A) ST(A)
+
 enum EPowerMode {
     mode_offline,
     mode_nofreeze,
@@ -190,8 +193,6 @@ void resetConfig() {
 }
 
 void initOTA() {
-    //m_udp.begin(KUdpLocalPort);
-
     // Port defaults to 8266
     // ArduinoOTA.setPort(8266);
 
@@ -200,10 +201,14 @@ void initOTA() {
 
     Serial.print("FreeSketchSpace: ");
     Serial.println(ESP.getFreeSketchSpace());
-    
 
-    // No authentication by default
-    ArduinoOTA.setPassword("your-secret-password");
+#ifdef OTA_PASSWD
+    // Require password
+    ArduinoOTA.setPassword(STR(OTA_PASSWD));
+#else
+    #pragma message "Warning: no OTA password"
+    Serial.println("Warning! no OTA password defined");
+#endif
 
     ArduinoOTA.onStart([]() {
         setMainPower(false);
