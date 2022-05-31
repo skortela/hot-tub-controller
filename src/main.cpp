@@ -870,14 +870,27 @@ void setup() {
 }
 
 bool isTooHotWater() {
+    float waterTank = m_board.getTemperatureWaterTank();
+    float waterIn = m_board.getTemperatureSensorWaterIn();
+    if (waterTank == DEVICE_DISCONNECTED_C && waterIn == DEVICE_DISCONNECTED_C) {
+        // Reading error on both sensors. For safety reasons shut down heater.
+        Serial.println("Sensor error!");
+        return true;
+    }
     // check temperature from two different sensors. If either one is too hot -> too hot
-    return (m_board.getTemperatureWaterTank() > wantedTemperature() 
-        || m_board.getTemperatureSensorWaterIn() > wantedTemperature());
+    return (waterTank > wantedTemperature() || waterIn > wantedTemperature());
 }
 bool isTooColdWater() {
+    float waterTank = m_board.getTemperatureWaterTank();
+    float waterIn = m_board.getTemperatureSensorWaterIn();
+    if (waterTank == DEVICE_DISCONNECTED_C && waterIn == DEVICE_DISCONNECTED_C) {
+        // Reading error on both sensors. Cannot know water temperature.
+        Serial.println("Sensor error!");
+        return false;
+    }
+    float waterLimitMin = wantedTemperature() - m_settings.m_temperature_delta;
     // check temperature from two different sensors. If both are below limit -> too cold
-    return (m_board.getTemperatureWaterTank() < wantedTemperature() - m_settings.m_temperature_delta
-     && m_board.getTemperatureSensorWaterIn() < wantedTemperature() - m_settings.m_temperature_delta);
+    return (waterTank < waterLimitMin && waterIn < waterLimitMin);
 }
 
 // returns current flame duration, or 0 if no flame detectec
