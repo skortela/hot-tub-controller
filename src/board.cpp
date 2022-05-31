@@ -143,7 +143,7 @@ void Board::loop()
         m_hasTemperaturesRead = false;
         m_sensors.requestTemperatures();
     }
-    if (!m_hasTemperaturesRead && (unsigned long)(millis() - m_lastTemperatureRequestTime) > m_sensors.millisToWaitForConversion(KTEMPERATURE_RESOLUTION)) {
+    if (!m_hasTemperaturesRead && (unsigned long)(millis() - m_lastTemperatureRequestTime) > (unsigned long)m_sensors.millisToWaitForConversion(KTEMPERATURE_RESOLUTION)) {
         /*uint8_t devCount = m_sensors.getDeviceCount();
         for (uint8_t i=0; i < devCount && i < KMAX_DALLAS_SENSOR_COUNT; i++) {
             m_temperatureCache[i] = m_sensors.getTempCByIndex(i);
