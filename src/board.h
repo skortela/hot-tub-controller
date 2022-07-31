@@ -41,11 +41,13 @@ public:
     bool hasFlame() const;
     bool hasHeatingError() const;
     bool hasMainPower() const;
+    bool hasManualOverride() const;
     bool hasHeaterPower() const;
     bool hasWaterPumpPower() const;
     bool hasExtPower() const;
 
     void setMainPower(bool power);
+    void setManualOverride(bool override);
     void setHeaterPower(bool power);
     void setWaterPumpPower(bool power);
     void setExtPower(bool power);
@@ -69,6 +71,8 @@ private:
     OneWire m_oneWire;
     mutable DallasTemperature m_sensors;
     bool m_mainPower;
+    bool m_manualOverride;
+    unsigned long m_manualOverrideStartupTime;
 
     void (*m_buttonPressedCallback)(uint8_t) = NULL;
     uint8_t m_inputLastState[10];

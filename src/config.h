@@ -18,6 +18,7 @@
 #define KStatusUpdateInterval 60000
 #define KTickerIntervalWifiConfig 200
 #define KTickerIntervalMQTTConnect 1000
+#define KMaxManualOverrideTime 3600000 // 1h
 
 // Magic number to check if eeprom config is valid
 #define KConfigValidationMagic 0x19278264

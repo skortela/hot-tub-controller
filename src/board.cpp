@@ -53,6 +53,8 @@ void Board::begin()
         m_mcp.digitalWrite(i, LOW);
     }
     m_mainPower = false;
+    m_manualOverride = false;
+    m_manualOverrideStartupTime = 0;
 
     m_mcp.pinMode(KPIN_INPUT_HEATING_FLAME, INPUT);
     m_mcp.pullUp(KPIN_INPUT_HEATING_FLAME, HIGH);
@@ -164,6 +166,14 @@ void Board::loop()
         m_hasTemperaturesRead = true;
         m_cacheReady = true;
     }
+
+    if (m_manualOverride) {
+        if ( (unsigned long)(millis() - m_manualOverrideStartupTime) > KMaxManualOverrideTime) {
+            Serial.println("timeout for manual override, stopping..");
+            // timeout for manual override, stop it
+            setManualOverride(false);
+        }
+    }
 }
 
 DallasTemperature* Board::dallasTemperature()
@@ -190,6 +200,10 @@ bool Board::hasMainPower() const
 {
     return m_mainPower;
 }
+bool Board::hasManualOverride() const
+{
+    return m_manualOverride;
+}
 bool Board::hasHeaterPower() const
 {
     return m_mcp.digitalRead(KMCP_PIN_RELAY_HEATER);
@@ -214,6 +228,14 @@ void Board::setMainPower(bool power)
         m_mcp.digitalWrite(KMCP_PIN_RELAY_LED, LOW);
         setHeaterPower(false);
     }
+}
+void Board::setManualOverride(bool override)
+{
+    m_manualOverride = override;
+    if (override)
+        m_manualOverrideStartupTime = millis();
+    else
+        m_manualOverrideStartupTime = 0;
 }
 void Board::setHeaterPower(bool power)
 {

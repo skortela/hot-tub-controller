@@ -112,6 +112,7 @@ bool m_lastFlameStatus;
 unsigned long m_flameStartupTime; // system millis at flame startup, undefined if no flame
 unsigned long m_flameLastDuration; // flame duration at last cycle
 uint64_t m_flameTotalDuration; // flame total duration without current flame duration
+
 // forward declarations
 void setMainPower(bool value);
 void sendStatus();
@@ -263,6 +264,9 @@ void setMainPower(bool value) {
 
     m_lastStatusUpdate = 0; // reset timer, so statusUpdate is sent
     m_board.setMainPower(value);
+    if (!value) {
+        m_board.setManualOverride(false);
+    }
 }
 
 void sendInfo() {
@@ -319,6 +323,7 @@ void getStatus(char* pBuffer) {
     /**
 {
     "main_power": true,
+    "manual_override": false,
     "heating": false,
     "flame": false,
     "mode": "normal",
@@ -335,6 +340,7 @@ void getStatus(char* pBuffer) {
      * 
      **/
     root["main_power"] = m_board.hasMainPower();
+    root["manual_override"] = m_board.hasManualOverride();
     root["heater_power"] = m_board.hasHeaterPower();
     root["water_pump_power"] = m_board.hasWaterPumpPower();
     root["ext_power"] = m_board.hasExtPower();
@@ -536,7 +542,7 @@ void mqtt_message_received(char* topic, byte* payload, unsigned int length)
     
     Serial.println(topicCmd);
 
-    Serial.println(commandLen);
+    //Serial.println(commandLen);
 
     if (strncmp(topicCmd, "info", commandLen) == 0) {
         sendInfo();
@@ -556,6 +562,14 @@ void mqtt_message_received(char* topic, byte* payload, unsigned int length)
         }
         else if (strcasecmp(strPayload, "false") == 0) {
             setMainPower(false);
+        }
+    }
+    else if (strncmp(topicCmd, "set_manual_override", commandLen) == 0) {
+        if (strcasecmp(strPayload, "true") == 0) {
+            m_board.setManualOverride(true);
+        }
+        else if (strcasecmp(strPayload, "false") == 0) {
+            m_board.setManualOverride(false);
         }
     }
     else if (strncmp(topicCmd, "set_water_pump_power", commandLen) == 0) {
@@ -920,26 +934,36 @@ void loop() {
     m_board.loop();
     
     if (m_board.hasMainPower()) {
-        if (m_board.hasHeaterPower()) {
-            // temperature too high, and flame has been on at least 30 sec.
-            if (isTooHotWater() && currentFlameDuration() > 30000) {
-                // stop heating
-                m_board.setHeaterPower(false);
+        if (m_board.hasManualOverride()) {
+            if (!m_board.hasHeaterPower()) {
+                // manual override -> start heating. Temperature sensors are ignored.
+                m_board.setHeaterPower(true);
                 m_lastStatusUpdate = 0;
             }
         }
         else {
-            // temperature too low
-            if (m_board.isReady() && isTooColdWater()) {
-                // start heating
-                m_board.setHeaterPower(true);
-                m_lastStatusUpdate = 0;
+            if (m_board.hasHeaterPower()) {
+                // temperature too high, and flame has been on at least 30 sec.
+                if (isTooHotWater() && currentFlameDuration() > 30000) {
+                    // stop heating
+                    m_board.setHeaterPower(false);
+                    m_lastStatusUpdate = 0;
+                }
+            }
+            else {
+                // temperature too low
+                if (m_board.isReady() && isTooColdWater()) {
+                    // start heating
+                    m_board.setHeaterPower(true);
+                    m_lastStatusUpdate = 0;
+                }
             }
         }
     }
     else {
         if (m_board.hasHeaterPower()) {
             m_board.setHeaterPower(false);
+            m_board.setManualOverride(false);
             m_lastStatusUpdate = 0;
         }
     }
